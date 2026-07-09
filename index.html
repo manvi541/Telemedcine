@@ -182,7 +182,7 @@
             <section class="card">
                 <h2>📆 Booked Appointments Queue</h2>
                 <div id="calendarList">
-                    <p class="no-records">Loading clinic records...</p>
+                    <p class="no-records">Syncing real-time timeline stream...</p>
                 </div>
             </section>
         </div>
@@ -190,7 +190,6 @@
     </main>
 
     <script>
-        // Verified Project Core Key Details
         const firebaseConfig = {
             apiKey: "AIzaSyAoAdd3afb54fb27cfc18fa",
             authDomain: "palia-kalan-telehealth.firebaseapp.com",
@@ -203,8 +202,10 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // Boot system setup and initialize live synchronization listener
         window.addEventListener('DOMContentLoaded', () => {
             updateAuthBadgeDisplay();
+            startLiveQueueSyncListener();
         });
 
         function updateAuthBadgeDisplay() {
@@ -241,7 +242,7 @@
             if (pageId === 'calendarPage') {
                 const isAuth = localStorage.getItem('doctorLoggedInForever');
                 if (isAuth !== 'true') {
-                    const pin = prompt("Enter Access PIN (1234) to open database logs:");
+                    const pin = prompt("Enter Access PIN (1234) to open dashboard logs:");
                     if (pin === "1234") {
                         localStorage.setItem('doctorLoggedInForever', 'true');
                         updateAuthBadgeDisplay();
@@ -261,7 +262,6 @@
                 document.getElementById('tab-booking').classList.add('active');
             } else if (pageId === 'calendarPage') {
                 document.getElementById('tab-calendar').classList.add('active');
-                loadCalendarAppointments();
             }
         }
 
@@ -279,12 +279,10 @@
             };
 
             try {
-                // Upload complete package object matrix
                 await db.collection("appointments").add(appointmentData);
-
                 document.getElementById('appointmentForm').reset();
 
-                // Fire confirmation view modal layout
+                // Trigger Animation overlay modal
                 const overlay = document.getElementById('successOverlay');
                 overlay.style.display = 'flex';
 
@@ -296,17 +294,18 @@
                 }, 2000);
 
             } catch (error) {
-                console.error("Write Failure Debug Data:", error);
-                alert("❌ Database Write Failure: " + error.message + "\n\nVerify that you published the Firestore security rules.");
+                console.error(error);
+                alert("❌ Database Write Failure: " + error.message);
             }
         });
 
-        function loadCalendarAppointments() {
+        // FIXED REAL-TIME ENGINE: Hooks directly into data stream snapshots
+        function startLiveQueueSyncListener() {
             const container = document.getElementById('calendarList');
-            container.innerHTML = '<p class="no-records">Syncing files from Cloud Firestore server logs...</p>';
             
-            db.collection("appointments").get().then((querySnapshot) => {
+            db.collection("appointments").onSnapshot((querySnapshot) => {
                 container.innerHTML = "";
+                
                 if (querySnapshot.empty) {
                     container.innerHTML = '<p class="no-records">No appointments found in database logs.</p>';
                     return;
@@ -326,7 +325,7 @@
                     });
                 });
 
-                // Arrange array timeline chronologically
+                // Sort chronological sequence layout cleanly
                 records.sort((a, b) => a.appointmentDate.localeCompare(b.appointmentDate));
 
                 records.forEach((data) => {
@@ -342,9 +341,9 @@
                     `;
                     container.appendChild(item);
                 });
-            }).catch((error) => {
-                console.error("Read Failure Debug Data:", error);
-                container.innerHTML = `<p class="no-records" style="color:red;">Error syncing from database: ${error.message}</p>`;
+            }, (error) => {
+                console.error("Live Stream Failure:", error);
+                container.innerHTML = `<p class="no-records" style="color:red;">Sync error: ${error.message}</p>`;
             });
         }
     </script>
