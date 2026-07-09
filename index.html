@@ -1,0 +1,244 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telemedicine App Prototype</title>
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .instructions {
+            margin-bottom: 15px;
+            color: #555;
+            text-align: center;
+            max-width: 350px;
+            font-size: 14px;
+        }
+        canvas {
+            background-color: #ffffff;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 32px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="instructions">
+    <h3>📱 Interactive App Prototype</h3>
+    <p>Click the buttons on the screen below to interact with the features!</p>
+</div>
+
+<canvas id="appCanvas" width="375" height="660"></canvas>
+
+<script>
+const canvas = document.getElementById('appCanvas');
+const ctx = canvas.getContext('2d');
+
+// App State
+let statusMessage = "How are you feeling today?";
+let activeScreen = "home"; // "home", "booking", "backpack"
+
+// Interactive Button Regions
+const buttons = {
+    home: {
+        videoCall: { x: 25, y: 140, w: 325, h: 60, color: '#FF4D4D', text: '⚡ INSTANT VIDEO CALL' },
+        bookAppt:  { x: 25, y: 240, w: 150, h: 80, color: '#4A90E2', text: '📅 Book Doctor' },
+        backpack:  { x: 200, y: 240, w: 150, h: 80, color: '#2ECC71', text: '💊 My Backpack' },
+        queueBtn:  { x: 25, y: 560, w: 325, h: 50, color: '#F39C12', text: 'Enter Virtual Waiting Room' }
+    },
+    backGlobal: { x: 25, y: 55, w: 70, h: 30, color: '#7F8C8D', text: '← Back' }
+};
+
+function drawApp() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // --- PHONE STATUS BAR ---
+    ctx.fillStyle = '#333';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText("12:00 PM", 30, 30);
+    ctx.fillText("📶 🔋 5G", 300, 30);
+
+    if (activeScreen === "home") {
+        drawHomeScreen();
+    } else if (activeScreen === "booking") {
+        drawBookingScreen();
+    } else if (activeScreen === "backpack") {
+        drawBackpackScreen();
+    }
+}
+
+function drawHomeScreen() {
+    // Welcome Banner
+    ctx.fillStyle = '#2C3E50';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText("👋 Hello, Alex!", 25, 80);
+    
+    ctx.fillStyle = '#7F8C8D';
+    ctx.font = '16px sans-serif';
+    ctx.fillText(statusMessage, 25, 110);
+
+    // Instant Video Call
+    drawButton(buttons.home.videoCall);
+
+    // Quick Actions Grid
+    ctx.fillStyle = '#2C3E50';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText("Quick Actions", 25, 230);
+    
+    drawButton(buttons.home.bookAppt);
+    drawButton(buttons.home.backpack);
+
+    // Upcoming Appointment Card
+    ctx.fillStyle = '#F8F9FA';
+    ctx.beginPath();
+    ctx.roundRect(25, 350, 325, 280, 16);
+    ctx.fill();
+
+    ctx.fillStyle = '#2C3E50';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText("Upcoming Appointment", 45, 390);
+
+    ctx.fillStyle = '#34495E';
+    ctx.font = '15px sans-serif';
+    ctx.fillText("👨‍⚕️ Dr. Smith (Asthma Specialist)", 45, 430);
+    ctx.fillText("📅 Tomorrow at 10:00 AM", 45, 460);
+    
+    ctx.fillStyle = '#7F8C8D';
+    ctx.font = 'italic 14px sans-serif';
+    ctx.fillText("No travel needed! Connect straight", 45, 500);
+    ctx.fillText("from your couch.", 45, 520);
+
+    // Virtual Waiting Room Button
+    drawButton(buttons.home.queueBtn);
+}
+
+function drawBookingScreen() {
+    drawButton(buttons.backGlobal);
+
+    ctx.fillStyle = '#2C3E50';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText("📅 24/7 Booking", 25, 120);
+
+    ctx.font = '16px sans-serif';
+    ctx.fillStyle = '#34495E';
+    ctx.fillText("Click a button to book a slot at midnight,", 25, 160);
+    ctx.fillText("without waiting for the clinic to open.", 25, 185);
+
+    // Simple interactive slots
+    ctx.fillStyle = '#ECF0F1';
+    ctx.roundRect(25, 220, 325, 50, 8); ctx.fill();
+    ctx.roundRect(25, 280, 325, 50, 8); ctx.fill();
+    ctx.roundRect(25, 340, 325, 50, 8); ctx.fill();
+
+    ctx.fillStyle = '#2C3E50';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText("Today - 02:00 PM (Routine Update)", 40, 250);
+    ctx.fillText("Tomorrow - 09:30 AM (Quick Check-in)", 40, 310);
+    ctx.fillText("Midnight Special - 12:05 AM (Urgent)", 40, 370);
+
+    ctx.fillStyle = '#7F8C8D';
+    ctx.font = '14px sans-serif';
+    ctx.fillText(statusMessage, 25, 430);
+}
+
+function drawBackpackScreen() {
+    drawButton(buttons.backGlobal);
+
+    ctx.fillStyle = '#2C3E50';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText("🎒 Digital Backpack", 25, 120);
+
+    ctx.font = '16px sans-serif';
+    ctx.fillStyle = '#34495E';
+    ctx.fillText("Your health data safely stored in one place.", 25, 150);
+
+    // Section 1: Prescriptions
+    ctx.fillStyle = '#E8F8F5';
+    ctx.beginPath(); ctx.roundRect(25, 180, 325, 100, 12); ctx.fill();
+    ctx.fillStyle = '#117A65';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText("💊 Active Prescriptions", 40, 210);
+    ctx.font = '14px sans-serif';
+    ctx.fillStyle = '#16A085';
+    ctx.fillText("• Asthma Inhaler (Albuterol) - 1 Refill", 40, 240);
+    ctx.fillText("🔔 Automatic Reminder Active", 40, 265);
+
+    // Section 2: History
+    ctx.fillStyle = '#EBF5FB';
+    ctx.beginPath(); ctx.roundRect(25, 300, 325, 100, 12); ctx.fill();
+    ctx.fillStyle = '#2471A3';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText("📊 Easy Medical History", 40, 330);
+    ctx.font = '14px sans-serif';
+    ctx.fillStyle = '#2980B9';
+    ctx.fillText("• Last Month: Asthma Check-up [Stable]", 40, 360);
+    ctx.fillText("• June 2026: Lab Test Results [View PDF]", 40, 380);
+}
+
+function drawButton(b) {
+    ctx.fillStyle = b.color;
+    ctx.beginPath();
+    ctx.roundRect(b.x, b.y, b.w, b.h, 12);
+    ctx.fill();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(b.text, b.x + (b.w / 2), b.y + (b.h / 2));
+    
+    // Reset defaults
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+}
+
+function isInside(x, y, button) {
+    return x > button.x && x < button.x + button.w && y > button.y && y < button.y + button.h;
+}
+
+// Click Management
+canvas.addEventListener('click', function(event) {
+    const rect = canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+
+    if (activeScreen === "home") {
+        if (isInside(clickX, clickY, buttons.home.videoCall)) {
+            [cite_start]statusMessage = "🚨 Connecting to video call from couch..."; [cite: 6, 7]
+        } else if (isInside(clickX, clickY, buttons.home.bookAppt)) {
+            activeScreen = "booking";
+            statusMessage = "Select a time slot.";
+        } else if (isInside(clickX, clickY, buttons.home.backpack)) {
+            activeScreen = "backpack";
+        } else if (isInside(clickX, clickY, buttons.home.queueBtn)) {
+            [cite_start]statusMessage = "⏳ You are #2 in line. Zero germs caught!"; [cite: 10]
+        }
+    } else {
+        // Back Button functionality on sub-screens
+        if (isInside(clickX, clickY, buttons.backGlobal)) {
+            activeScreen = "home";
+        }
+    }
+
+    drawApp();
+});
+
+// Start the app canvas view
+drawApp();
+</script>
+
+</body>
+</html>
+
+```
