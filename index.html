@@ -80,9 +80,10 @@
         .form-group { margin-bottom: 1.2rem; }
         label { display: block; margin-bottom: 0.4rem; font-weight: 600; }
         
-        input, textarea {
+        input, textarea, select {
             width: 100%; padding: 0.75rem; border: 1px solid #ccc;
             border-radius: 6px; box-sizing: border-box; font-size: 1rem;
+            background-color: #fff;
         }
 
         .btn {
@@ -95,6 +96,12 @@
         .btn-primary:hover { background-color: #218377; }
         .btn-whatsapp { background-color: var(--whatsapp-color); color: white; margin-top: 0.5rem;}
         .btn-whatsapp:hover { background-color: #1ebd54; }
+
+        .whatsapp-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
 
         #statusMessage {
             margin-top: 1rem; padding: 0.75rem; border-radius: 6px;
@@ -143,13 +150,23 @@
         <div id="bookingPage" class="page-view active">
             <section class="card whatsapp-card">
                 <h2>💬 General Inquiry</h2>
-                <p>Chat directly with Dr. Anil Kapoor's team via WhatsApp for queries or help from home.</p>
-                <button id="whatsappGeneralBtn" class="btn btn-whatsapp">Chat on WhatsApp</button>
+                <p>Chat directly with our medical team via WhatsApp for quick queries:</p>
+                <div class="whatsapp-options">
+                    <button onclick="openGeneralWhatsApp('senior')" class="btn btn-whatsapp">Chat with Senior Doctor</button>
+                    <button onclick="openGeneralWhatsApp('dentist')" class="btn btn-whatsapp">Chat with Dentist</button>
+                </div>
             </section>
 
             <section class="card booking-card">
                 <h2>📅 Book an Appointment Quickly</h2>
                 <form id="appointmentForm">
+                    <div class="form-group">
+                        <label for="doctorSelect">Select Doctor / Department:</label>
+                        <select id="doctorSelect" required>
+                            <option value="Senior Doctor">Dr. Anil Kapoor (Senior Doctor)</option>
+                            <option value="Dentist">Dental Department (Dentist)</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label for="patientName">Patient Full Name:</label>
                         <input type="text" id="patientName" required placeholder="Enter full name">
@@ -164,7 +181,7 @@
                     </div>
                     <div class="form-group">
                         <label for="symptoms">Briefly describe symptoms (Optional):</label>
-                        <textarea id="symptoms" rows="3" placeholder="e.g., Fever, cough..."></textarea>
+                        <textarea id="symptoms" rows="3" placeholder="e.g., Fever, toothache..."></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">Confirm Secure Booking</button>
                 </form>
@@ -201,22 +218,27 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 2. CHOOSE YOUR CLINIC WHATSAPP PHONE NUMBER (Include country code, no "+" or spaces)
-        // Insert Dr. Anil Kapoor's full target number here
-        const CLINIC_WHATSAPP_NUMBER = "91XXXXXXXXXX"; 
+        // 2. DOCTOR WHATSAPP NUMBERS CONFIGURATION
+        const WHATSAPP_NUMBERS = {
+            senior: "919415147508", // Dr. Anil Kapoor
+            dentist: "919415232231"  // Dentist
+        };
         
         let activeAppointmentData = null;
-        let isDoctorAuthenticated = false;
 
-        // View Router with simple Pin authorization protect
+        // View Router with smart memory authorization
         function switchPage(pageId) {
-            if (pageId === 'calendarPage' && !isDoctorAuthenticated) {
-                const pin = prompt("Enter Doctor Clinic Access PIN to view calendar bookings:");
-                if (pin === "1234") { // You can change '1234' to any clinic password you prefer
-                    isDoctorAuthenticated = true;
-                } else {
-                    alert("Incorrect Access PIN. Access Denied.");
-                    return;
+            if (pageId === 'calendarPage') {
+                const isAlreadyLoggedIn = sessionStorage.getItem('doctorAuthenticated');
+
+                if (!isAlreadyLoggedIn) {
+                    const pin = prompt("Enter Doctor Clinic Access PIN to view calendar bookings:");
+                    if (pin === "1234") {
+                        sessionStorage.setItem('doctorAuthenticated', 'true');
+                    } else {
+                        alert("Incorrect Access PIN. Access Denied.");
+                        return;
+                    }
                 }
             }
 
@@ -231,30 +253,37 @@
             }
         }
 
-        // WhatsApp General Chat Link
-        document.getElementById('whatsappGeneralBtn').addEventListener('click', () => {
-            const message = encodeURIComponent("Hello Dr. Anil Kapoor's Clinic, I would like to inquire about booking an appointment.");
-            window.open(`https://wa.me/${CLINIC_WHATSAPP_NUMBER}?text=${message}`, '_blank');
-        });
+        // WhatsApp General Chat Router
+        function openGeneralWhatsApp(type) {
+            const targetNumber = WHATSAPP_NUMBERS[type];
+            const message = encodeURIComponent("Hello, I would like to inquire about booking an appointment at the clinic.");
+            window.open(`https://wa.me/${targetNumber}?text=${message}`, '_blank');
+        }
 
-        // WhatsApp Custom Form Forwarding Link
+        // WhatsApp Post-Booking Dynamic Forwarding
         document.getElementById('whatsappForwardBtn').addEventListener('click', () => {
             if (!activeAppointmentData) return;
+            
+            // Route to correct phone number based on selected department
+            const targetNumber = activeAppointmentData.doctorType === "Dentist" ? WHATSAPP_NUMBERS.dentist : WHATSAPP_NUMBERS.senior;
+
             const msgText = `*NEW APPOINTMENT BOOKED*\n\n` +
+                            `• *Department:* ${activeAppointmentData.doctorType}\n` +
                             `• *Patient:* ${activeAppointmentData.name}\n` +
                             `• *Phone:* ${activeAppointmentData.phone}\n` +
                             `• *Date:* ${activeAppointmentData.date}\n` +
                             `• *Symptoms:* ${activeAppointmentData.symptoms || 'None listed'}`;
             
-            window.open(`https://wa.me/${CLINIC_WHATSAPP_NUMBER}?text=${encodeURIComponent(msgText)}`, '_blank');
+            window.open(`https://wa.me/${targetNumber}?text=${encodeURIComponent(msgText)}`, '_blank');
         });
 
-        // Form handler saving directly into Firestore
+        // Form submission saving to Firestore
         document.getElementById('appointmentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const statusMessage = document.getElementById('statusMessage');
             const forwardBtn = document.getElementById('whatsappForwardBtn');
             
+            const doctorType = document.getElementById('doctorSelect').value;
             const name = document.getElementById('patientName').value;
             const phone = document.getElementById('patientPhone').value;
             const date = document.getElementById('appointmentDate').value;
@@ -263,6 +292,7 @@
             try {
                 // Save database record
                 await db.collection("appointments").add({
+                    doctorType: doctorType,
                     patientName: name,
                     patientPhone: phone,
                     appointmentDate: date,
@@ -270,25 +300,25 @@
                     createdAt: new Date().toISOString()
                 });
 
-                // Cache entry for local text forward trigger
-                activeAppointmentData = { name, phone, date, symptoms };
+                // Cache details for dynamic WhatsApp routing link
+                activeAppointmentData = { doctorType, name, phone, date, symptoms };
 
                 statusMessage.style.display = "block";
-                statusMessage.textContent = "✔ Booking saved securely! Tap below to forward details directly to our WhatsApp.";
+                statusMessage.textContent = "✔ Booking saved securely! Tap below to forward details directly to the selected Doctor's WhatsApp.";
                 statusMessage.className = "success";
                 
-                // Expose WhatsApp instant forward option
+                // Show the dynamic forwarding button
                 forwardBtn.style.display = "block";
                 document.getElementById('appointmentForm').reset();
             } catch (error) {
                 console.error(error);
                 statusMessage.style.display = "block";
-                statusMessage.textContent = "❌ Database error. Make sure Firestore rules are set to public/test mode.";
+                statusMessage.textContent = "❌ Database error. Make sure Firestore rules are set to test mode.";
                 statusMessage.className = "error";
             }
         });
 
-        // Fetch dynamic rows for Doctor's Dashboard View
+        // Fetch list logs for Doctor Dashboard View
         function loadCalendarAppointments() {
             const container = document.getElementById('calendarList');
             container.innerHTML = '<p class="no-records">Syncing files from server...</p>';
@@ -306,6 +336,7 @@
                     item.className = 'appointment-item';
                     item.innerHTML = `
                         <div class="appointment-date">🗓️ Target Date: ${data.appointmentDate}</div>
+                        <strong>Department/Doctor:</strong> ${data.doctorType || 'Senior Doctor'}<br>
                         <strong>Patient Name:</strong> ${data.patientName}<br>
                         <strong>Contact Phone:</strong> ${data.patientPhone}<br>
                         <strong>Symptoms Logged:</strong> ${data.symptoms || 'None Specified'}<br>
