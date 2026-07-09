@@ -30,22 +30,40 @@
             background-color: var(--secondary-color);
             color: white;
             text-align: center;
-            padding: 2rem 1rem;
+            padding: 1.5rem 1rem;
         }
 
-        header h1 {
-            margin: 0;
-            font-size: 1.8rem;
+        header h1 { margin: 0; font-size: 1.8rem; }
+        .location { margin-top: 0.5rem; opacity: 0.9; }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            background: #e9ecef;
+            padding: 0.5rem;
+            gap: 10px;
         }
 
-        .location {
-            margin-top: 0.5rem;
-            opacity: 0.9;
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px;
+            color: var(--secondary-color);
+            transition: 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary-color);
+            color: white;
         }
 
         .container {
-            max-width: 500px;
-            margin: 2rem auto;
+            max-width: 550px;
+            margin: 1.5rem auto;
             padding: 0 1rem;
             box-sizing: border-box;
         }
@@ -58,86 +76,54 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
-        h2 {
-            margin-top: 0;
-            color: var(--secondary-color);
-            font-size: 1.4rem;
-        }
-
-        p {
-            line-height: 1.5;
-            color: #555;
-        }
-
-        .form-group {
-            margin-bottom: 1.2rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.4rem;
-            font-weight: 600;
-        }
-
+        h2 { margin-top: 0; color: var(--secondary-color); font-size: 1.4rem; }
+        .form-group { margin-bottom: 1.2rem; }
+        label { display: block; margin-bottom: 0.4rem; font-weight: 600; }
+        
         input, textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 1rem;
-            font-family: inherit;
-        }
-
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
+            width: 100%; padding: 0.75rem; border: 1px solid #ccc;
+            border-radius: 6px; box-sizing: border-box; font-size: 1rem;
         }
 
         .btn {
-            width: 100%;
-            padding: 0.85rem;
-            border: none;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
+            width: 100%; padding: 0.85rem; border: none;
+            border-radius: 6px; font-size: 1rem; font-weight: bold;
+            cursor: pointer; transition: background 0.2s;
         }
 
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #218377;
-        }
-
-        .btn-whatsapp {
-            background-color: var(--whatsapp-color);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-whatsapp:hover {
-            background-color: #1ebd54;
-        }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: #218377; }
+        .btn-whatsapp { background-color: var(--whatsapp-color); color: white; margin-top: 0.5rem;}
+        .btn-whatsapp:hover { background-color: #1ebd54; }
 
         #statusMessage {
-            margin-top: 1rem;
-            padding: 0.75rem;
-            border-radius: 6px;
-            text-align: center;
-            font-weight: bold;
+            margin-top: 1rem; padding: 0.75rem; border-radius: 6px;
+            text-align: center; font-weight: bold;
         }
-
         .success { background-color: #d4edda; color: #155724; }
         .error { background-color: #f8d7da; color: #721c24; }
-        .hidden { display: none; }
+        
+        .page-view { display: none; }
+        .page-view.active { display: block; }
+
+        .appointment-item {
+            border-left: 5px solid var(--primary-color);
+            background: #f8f9fa;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 4px;
+        }
+        .appointment-date {
+            font-weight: bold;
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+        }
+        .no-records {
+            text-align: center;
+            color: #777;
+            font-style: italic;
+            padding: 2rem 0;
+        }
     </style>
 </head>
 <body>
@@ -147,44 +133,190 @@
         <p class="location">📍 Palia Kalan | Digital Health Portal</p>
     </header>
 
+    <nav class="nav-tabs">
+        <button class="tab-btn active" id="tab-booking" onclick="switchPage('bookingPage')">📅 Book Appointment</button>
+        <button class="tab-btn" id="tab-calendar" onclick="switchPage('calendarPage')">👨‍⚕️ Doctor Dashboard</button>
+    </nav>
+
     <main class="container">
-        <section class="card whatsapp-card">
-            <h2>💬 Need Instant Help?</h2>
-            <p>Chat directly with Dr. Anil Kapoor's team via WhatsApp for instant support from home.</p>
-            <button id="whatsappBtn" class="btn btn-whatsapp">Message on WhatsApp</button>
-        </section>
+        
+        <div id="bookingPage" class="page-view active">
+            <section class="card whatsapp-card">
+                <h2>💬 General Inquiry</h2>
+                <p>Chat directly with Dr. Anil Kapoor's team via WhatsApp for queries or help from home.</p>
+                <button id="whatsappGeneralBtn" class="btn btn-whatsapp">Chat on WhatsApp</button>
+            </section>
 
-        <section class="card booking-card">
-            <h2>📅 Book an Appointment Quickly</h2>
-            <p>Skip the crowded waiting rooms and reserve your virtual or in-person slot 24/7.</p>
-            
-            <form id="appointmentForm">
-                <div class="form-group">
-                    <label for="patientName">Patient Full Name:</label>
-                    <input type="text" id="patientName" required placeholder="Enter full name">
+            <section class="card booking-card">
+                <h2>📅 Book an Appointment Quickly</h2>
+                <form id="appointmentForm">
+                    <div class="form-group">
+                        <label for="patientName">Patient Full Name:</label>
+                        <input type="text" id="patientName" required placeholder="Enter full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="patientPhone">Phone Number:</label>
+                        <input type="tel" id="patientPhone" required placeholder="Enter mobile number">
+                    </div>
+                    <div class="form-group">
+                        <label for="appointmentDate">Preferred Date:</label>
+                        <input type="date" id="appointmentDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="symptoms">Briefly describe symptoms (Optional):</label>
+                        <textarea id="symptoms" rows="3" placeholder="e.g., Fever, cough..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Confirm Secure Booking</button>
+                </form>
+                <div id="statusMessage" style="display:none;"></div>
+                
+                <button id="whatsappForwardBtn" class="btn btn-whatsapp" style="display: none;">📱 Forward Details via WhatsApp</button>
+            </section>
+        </div>
+
+        <div id="calendarPage" class="page-view">
+            <section class="card">
+                <h2>📆 Booked Appointments Queue</h2>
+                <p>Real-time slot logs from Firestore database for Palia Kalan Clinic:</p>
+                <div id="calendarList">
+                    <p class="no-records">Enter credentials or loading appointments...</p>
                 </div>
+            </section>
+        </div>
 
-                <div class="form-group">
-                    <label for="patientPhone">Phone Number:</label>
-                    <input type="tel" id="patientPhone" required placeholder="Enter mobile number">
-                </div>
-
-                <div class="form-group">
-                    <label for="appointmentDate">Preferred Date:</label>
-                    <input type="date" id="appointmentDate" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="symptoms">Briefly describe symptoms (Optional):</label>
-                    <textarea id="symptoms" rows="3" placeholder="e.g., Fever, cough, asthma check-up..."></textarea>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Confirm Secure Booking</button>
-            </form>
-            <div id="statusMessage" class="hidden"></div>
-        </section>
     </main>
 
-    <script src="app.js"></script>
+    <script>
+        // 1. PLACE YOUR FIREBASE CONFIGURATION HERE FROM YOUR SCREEN
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 2. CHOOSE YOUR CLINIC WHATSAPP PHONE NUMBER (Include country code, no "+" or spaces)
+        // Insert Dr. Anil Kapoor's full target number here
+        const CLINIC_WHATSAPP_NUMBER = "91XXXXXXXXXX"; 
+        
+        let activeAppointmentData = null;
+        let isDoctorAuthenticated = false;
+
+        // View Router with simple Pin authorization protect
+        function switchPage(pageId) {
+            if (pageId === 'calendarPage' && !isDoctorAuthenticated) {
+                const pin = prompt("Enter Doctor Clinic Access PIN to view calendar bookings:");
+                if (pin === "1234") { // You can change '1234' to any clinic password you prefer
+                    isDoctorAuthenticated = true;
+                } else {
+                    alert("Incorrect Access PIN. Access Denied.");
+                    return;
+                }
+            }
+
+            document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(pageId).classList.add('active');
+            if (pageId === 'bookingPage') document.getElementById('tab-booking').classList.add('active');
+            if (pageId === 'calendarPage') {
+                document.getElementById('tab-calendar').classList.add('active');
+                loadCalendarAppointments();
+            }
+        }
+
+        // WhatsApp General Chat Link
+        document.getElementById('whatsappGeneralBtn').addEventListener('click', () => {
+            const message = encodeURIComponent("Hello Dr. Anil Kapoor's Clinic, I would like to inquire about booking an appointment.");
+            window.open(`https://wa.me/${CLINIC_WHATSAPP_NUMBER}?text=${message}`, '_blank');
+        });
+
+        // WhatsApp Custom Form Forwarding Link
+        document.getElementById('whatsappForwardBtn').addEventListener('click', () => {
+            if (!activeAppointmentData) return;
+            const msgText = `*NEW APPOINTMENT BOOKED*\n\n` +
+                            `• *Patient:* ${activeAppointmentData.name}\n` +
+                            `• *Phone:* ${activeAppointmentData.phone}\n` +
+                            `• *Date:* ${activeAppointmentData.date}\n` +
+                            `• *Symptoms:* ${activeAppointmentData.symptoms || 'None listed'}`;
+            
+            window.open(`https://wa.me/${CLINIC_WHATSAPP_NUMBER}?text=${encodeURIComponent(msgText)}`, '_blank');
+        });
+
+        // Form handler saving directly into Firestore
+        document.getElementById('appointmentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const statusMessage = document.getElementById('statusMessage');
+            const forwardBtn = document.getElementById('whatsappForwardBtn');
+            
+            const name = document.getElementById('patientName').value;
+            const phone = document.getElementById('patientPhone').value;
+            const date = document.getElementById('appointmentDate').value;
+            const symptoms = document.getElementById('symptoms').value;
+
+            try {
+                // Save database record
+                await db.collection("appointments").add({
+                    patientName: name,
+                    patientPhone: phone,
+                    appointmentDate: date,
+                    symptoms: symptoms,
+                    createdAt: new Date().toISOString()
+                });
+
+                // Cache entry for local text forward trigger
+                activeAppointmentData = { name, phone, date, symptoms };
+
+                statusMessage.style.display = "block";
+                statusMessage.textContent = "✔ Booking saved securely! Tap below to forward details directly to our WhatsApp.";
+                statusMessage.className = "success";
+                
+                // Expose WhatsApp instant forward option
+                forwardBtn.style.display = "block";
+                document.getElementById('appointmentForm').reset();
+            } catch (error) {
+                console.error(error);
+                statusMessage.style.display = "block";
+                statusMessage.textContent = "❌ Database error. Make sure Firestore rules are set to public/test mode.";
+                statusMessage.className = "error";
+            }
+        });
+
+        // Fetch dynamic rows for Doctor's Dashboard View
+        function loadCalendarAppointments() {
+            const container = document.getElementById('calendarList');
+            container.innerHTML = '<p class="no-records">Syncing files from server...</p>';
+            
+            db.collection("appointments").orderBy("appointmentDate", "asc").get().then((querySnapshot) => {
+                container.innerHTML = "";
+                if(querySnapshot.empty) {
+                    container.innerHTML = '<p class="no-records">No clinic appointments booked yet.</p>';
+                    return;
+                }
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const item = document.createElement('div');
+                    item.className = 'appointment-item';
+                    item.innerHTML = `
+                        <div class="appointment-date">🗓️ Target Date: ${data.appointmentDate}</div>
+                        <strong>Patient Name:</strong> ${data.patientName}<br>
+                        <strong>Contact Phone:</strong> ${data.patientPhone}<br>
+                        <strong>Symptoms Logged:</strong> ${data.symptoms || 'None Specified'}<br>
+                        <small style="color:#aaa;">Saved Reference: ${doc.id}</small>
+                    `;
+                    container.appendChild(item);
+                });
+            }).catch((error) => {
+                container.innerHTML = `<p class="no-records" style="color:red;">Error pulling records: ${error.message}</p>`;
+            });
+        }
+    </script>
 </body>
 </html>
