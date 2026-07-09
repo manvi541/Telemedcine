@@ -205,6 +205,7 @@
 
     <script>
         // 1. PLACE YOUR FIREBASE CONFIGURATION HERE FROM YOUR SCREEN
+        // Make sure to replace these placeholder strings with your actual keys from the project config tab!
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -264,14 +265,13 @@
         document.getElementById('whatsappForwardBtn').addEventListener('click', () => {
             if (!activeAppointmentData) return;
             
-            // Route to correct phone number based on selected department
             const targetNumber = activeAppointmentData.doctorType === "Dentist" ? WHATSAPP_NUMBERS.dentist : WHATSAPP_NUMBERS.senior;
 
             const msgText = `*NEW APPOINTMENT BOOKED*\n\n` +
                             `• *Department:* ${activeAppointmentData.doctorType}\n` +
-                            `• *Patient:* ${activeAppointmentData.name}\n` +
-                            `• *Phone:* ${activeAppointmentData.phone}\n` +
-                            `• *Date:* ${activeAppointmentData.date}\n` +
+                            `• *Patient:* ${activeAppointmentData.patientName}\n` +
+                            `• *Phone:* ${activeAppointmentData.patientPhone}\n` +
+                            `• *Date:* ${activeAppointmentData.appointmentDate}\n` +
                             `• *Symptoms:* ${activeAppointmentData.symptoms || 'None listed'}`;
             
             window.open(`https://wa.me/${targetNumber}?text=${encodeURIComponent(msgText)}`, '_blank');
@@ -284,24 +284,24 @@
             const forwardBtn = document.getElementById('whatsappForwardBtn');
             
             const doctorType = document.getElementById('doctorSelect').value;
-            const name = document.getElementById('patientName').value;
-            const phone = document.getElementById('patientPhone').value;
-            const date = document.getElementById('appointmentDate').value;
+            const patientName = document.getElementById('patientName').value;
+            const patientPhone = document.getElementById('patientPhone').value;
+            const appointmentDate = document.getElementById('appointmentDate').value;
             const symptoms = document.getElementById('symptoms').value;
 
             try {
-                // Save database record
+                // Save database record with keys mapping EXACTLY to your Firestore database schema fields
                 await db.collection("appointments").add({
                     doctorType: doctorType,
-                    patientName: name,
-                    patientPhone: phone,
-                    appointmentDate: date,
+                    patientName: patientName,
+                    patientPhone: patientPhone,
+                    appointmentDate: appointmentDate,
                     symptoms: symptoms,
                     createdAt: new Date().toISOString()
                 });
 
                 // Cache details for dynamic WhatsApp routing link
-                activeAppointmentData = { doctorType, name, phone, date, symptoms };
+                activeAppointmentData = { doctorType, patientName, patientPhone, appointmentDate, symptoms };
 
                 statusMessage.style.display = "block";
                 statusMessage.textContent = "✔ Booking saved securely! Tap below to forward details directly to the selected Doctor's WhatsApp.";
@@ -337,8 +337,8 @@
                     item.innerHTML = `
                         <div class="appointment-date">🗓️ Target Date: ${data.appointmentDate}</div>
                         <strong>Department/Doctor:</strong> ${data.doctorType || 'Senior Doctor'}<br>
-                        <strong>Patient Name:</strong> ${data.patientName}<br>
-                        <strong>Contact Phone:</strong> ${data.patientPhone}<br>
+                        <strong>Patient Name:</strong> ${data.patientName || 'Not Provided'}<br>
+                        <strong>Contact Phone:</strong> ${data.patientPhone || 'Not Provided'}<br>
                         <strong>Symptoms Logged:</strong> ${data.symptoms || 'None Specified'}<br>
                         <small style="color:#aaa;">Saved Reference: ${doc.id}</small>
                     `;
