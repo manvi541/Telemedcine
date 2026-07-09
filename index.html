@@ -180,14 +180,24 @@
                         <input type="date" id="appointmentDate" required>
                     </div>
                     <div class="form-group">
+                        <label for="appointmentTime">Preferred Time Slot:</label>
+                        <select id="appointmentTime" required>
+                            <option value="" disabled selected>Select a time slot</option>
+                            <option value="10:00 AM - 11:00 AM">10:00 AM - 11:00 AM</option>
+                            <option value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</option>
+                            <option value="12:00 PM - 01:00 PM">12:00 PM - 01:00 PM</option>
+                            <option value="04:00 PM - 05:00 PM">04:00 PM - 05:00 PM</option>
+                            <option value="05:00 PM - 06:00 PM">05:00 PM - 06:00 PM</option>
+                            <option value="06:00 PM - 07:00 PM">06:00 PM - 07:00 PM</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="symptoms">Briefly describe symptoms (Optional):</label>
                         <textarea id="symptoms" rows="3" placeholder="e.g., Fever, toothache..."></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">Confirm Secure Booking</button>
                 </form>
                 <div id="statusMessage" style="display:none;"></div>
-                
-                <button id="whatsappForwardBtn" class="btn btn-whatsapp" style="display: none;">📱 Forward Details via WhatsApp</button>
             </section>
         </div>
 
@@ -204,7 +214,7 @@
     </main>
 
     <script>
-        // Real active Firebase configuration mapping to PaliaKalanTelehealth app
+        // Active Firebase configuration mapping to PaliaKalanTelehealth app
         const firebaseConfig = {
             apiKey: "AIzaSyAoAdd3afb54fb27cfc18fa",
             authDomain: "palia-kalan-telehealth.firebaseapp.com",
@@ -220,11 +230,9 @@
 
         // Doctor WhatsApp Numbers Configuration
         const WHATSAPP_NUMBERS = {
-            senior: "919415147508", // Dr. Anil Kapoor
-            dentist: "919415232231"  // Dentist
+            senior: "919415147508", 
+            dentist: "919415232231"  
         };
-        
-        let activeAppointmentData = null;
 
         // Navigation page switcher
         function switchPage(pageId) {
@@ -247,7 +255,6 @@
             
             document.getElementById(pageId).classList.add('active');
             
-            // Highlight target navigation link buttons properly
             if (pageId === 'bookingPage') {
                 document.getElementById('tab-booking').classList.add('active');
             } else if (pageId === 'calendarPage') {
@@ -272,6 +279,7 @@
             const patientName = document.getElementById('patientName').value;
             const patientPhone = document.getElementById('patientPhone').value;
             const appointmentDate = document.getElementById('appointmentDate').value;
+            const appointmentTime = document.getElementById('appointmentTime').value;
             const symptoms = document.getElementById('symptoms').value;
 
             try {
@@ -281,18 +289,15 @@
                     patientName: patientName,
                     patientPhone: patientPhone,
                     appointmentDate: appointmentDate,
+                    appointmentTime: appointmentTime,
                     symptoms: symptoms,
                     createdAt: new Date().toISOString()
                 });
 
-                // Clear previous form values
                 document.getElementById('appointmentForm').reset();
 
-                // AUTOMATIC REDIRECT VISUAL CONFIRMATION:
-                // Pre-authorize the tab so the user sees their booking instantly without getting prompt dialogs
+                // Pre-authorize the tab so the user sees their booking instantly
                 sessionStorage.setItem('doctorAuthenticated', 'true');
-                
-                // Route the view layout explicitly to the Calendar tab layout row
                 switchPage('calendarPage');
 
             } catch (error) {
@@ -320,7 +325,7 @@
                     const item = document.createElement('div');
                     item.className = 'appointment-item';
                     item.innerHTML = `
-                        <div class="appointment-date">🗓️ Target Date: ${data.appointmentDate || 'No Date Specified'}</div>
+                        <div class="appointment-date">🗓️ Date: ${data.appointmentDate || 'No Date'} | ⏰ Time: ${data.appointmentTime || 'No Time Slot Selected'}</div>
                         <strong>Department/Doctor:</strong> ${data.doctorType || 'Senior Doctor'}<br>
                         <strong>Patient Name:</strong> ${data.patientName || 'Not Provided'}<br>
                         <strong>Contact Phone:</strong> ${data.patientPhone || 'Not Provided'}<br>
