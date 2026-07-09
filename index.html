@@ -161,7 +161,7 @@
             justify-content: center;
             align-items: center;
             font-size: 3rem;
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
         @keyframes popIn {
@@ -243,7 +243,7 @@
         <div id="calendarPage" class="page-view">
             <section class="card">
                 <h2>📆 Booked Appointments Queue</h2>
-                <p>Real-time historical timeline from Firestore database for Palia Kalan Clinic:</p>
+                <p>Real-time timeline pulled straight from database:</p>
                 <div id="calendarList">
                     <p class="no-records">Loading clinic records...</p>
                 </div>
@@ -265,7 +265,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Update top-bar badge status text on page boot initialization
         window.addEventListener('DOMContentLoaded', () => {
             updateAuthBadgeDisplay();
         });
@@ -273,7 +272,7 @@
         function updateAuthBadgeDisplay() {
             const btn = document.getElementById('doctorAuthStatusBtn');
             if (localStorage.getItem('doctorLoggedInForever') === 'true') {
-                btn.textContent = "🔓 Logged In As Doctor";
+                btn.textContent = "🔓 Doctor Logged In";
                 btn.style.background = "#2a9d8f";
             } else {
                 btn.textContent = "🔒 Doctor Portal";
@@ -283,7 +282,7 @@
 
         function handleDoctorAuthenticationToggle() {
             if (localStorage.getItem('doctorLoggedInForever') === 'true') {
-                if (confirm("Do you want to log out of Doctor Mode?")) {
+                if (confirm("Log out of Doctor Mode?")) {
                     localStorage.removeItem('doctorLoggedInForever');
                     updateAuthBadgeDisplay();
                     switchPage('bookingPage');
@@ -304,7 +303,7 @@
             if (pageId === 'calendarPage') {
                 const isAuth = localStorage.getItem('doctorLoggedInForever');
                 if (isAuth !== 'true') {
-                    const pin = prompt("Enter Access PIN (1234) to open the appointment log records:");
+                    const pin = prompt("Enter Access PIN (1234) to open database logs:");
                     if (pin === "1234") {
                         localStorage.setItem('doctorLoggedInForever', 'true');
                         updateAuthBadgeDisplay();
@@ -360,30 +359,30 @@
                     localStorage.setItem('doctorLoggedInForever', 'true');
                     updateAuthBadgeDisplay();
                     switchPage('calendarPage');
-                }, 2200);
+                }, 2000);
 
             } catch (error) {
                 console.error(error);
-                alert("❌ Failed to save appointment.");
+                alert("❌ Database Save Failed. Please check if rules are published.");
             }
         });
 
-        // Robust, fault-tolerant read engine mapping absolute historical timelines
+        // Safe Engine: Decoupled layout engine that renders everything flawlessly
         function loadCalendarAppointments() {
             const container = document.getElementById('calendarList');
-            container.innerHTML = '<p class="no-records">Syncing whole history from secure server logs...</p>';
+            container.innerHTML = '<p class="no-records">Downloading all past and present data from Firebase cloud...</p>';
             
             db.collection("appointments").get().then((querySnapshot) => {
                 container.innerHTML = "";
                 if (querySnapshot.empty) {
-                    container.innerHTML = '<p class="no-records">No clinic appointments booked yet.</p>';
+                    container.innerHTML = '<p class="no-records">No appointments found in database logs.</p>';
                     return;
                 }
                 
                 let records = [];
                 querySnapshot.forEach((doc) => {
                     const res = doc.data();
-                    let cleanDate = "No Date";
+                    let cleanDate = "Undated";
 
                     if (res.appointmentDate) {
                         if (typeof res.appointmentDate === 'object' && res.appointmentDate.seconds) {
@@ -396,15 +395,15 @@
                     records.push({
                         id: doc.id,
                         doctorType: String(res.doctorType || "Senior Doctor"),
-                        patientName: String(res.patientName || "Anonymous"),
+                        patientName: String(res.patientName || "Not Given"),
                         patientPhone: String(res.patientPhone || "No Phone"),
                         appointmentDate: cleanDate,
-                        appointmentTime: String(res.appointmentTime || "Not Scheduled"),
+                        appointmentTime: String(res.appointmentTime || "Not Selected"),
                         symptoms: String(res.symptoms || "None Logged")
                     });
                 });
 
-                // Chronological sorting (earliest appointments appear first)
+                // Simple fallback chronological sort
                 records.sort((a, b) => a.appointmentDate.localeCompare(b.appointmentDate));
 
                 records.forEach((data) => {
@@ -416,15 +415,15 @@
                         <strong>Patient Name:</strong> ${data.patientName}<br>
                         <strong>Contact Phone:</strong> ${data.patientPhone}<br>
                         <strong>Symptoms Logged:</strong> ${data.symptoms}<br>
-                        <small style="color:#aaa;">Ref ID: ${data.id}</small>
+                        <small style="color:#aaa;">Database Document Ref ID: ${data.id}</small>
                     `;
                     container.appendChild(item);
                 });
             }).catch((error) => {
                 console.error(error);
-                container.innerHTML = `<p class="no-records" style="color:red;">Error connecting to Firestore database.</p>`;
+                container.innerHTML = `<p class="no-records" style="color:red;">Error pulling records: ${error.message}</p>`;
             });
         }
     </script>
 </body>
-</html>   
+</html>
