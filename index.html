@@ -94,8 +94,6 @@
 
         .btn-primary { background-color: var(--primary-color); color: white; }
         .btn-primary:hover { background-color: #218377; }
-        .btn-whatsapp { background-color: var(--whatsapp-color); color: white; margin-top: 0.5rem;}
-        .btn-whatsapp:hover { background-color: #1ebd54; }
 
         .appointment-item {
             border-left: 5px solid var(--primary-color);
@@ -181,7 +179,7 @@
                 <h2>📆 Booked Appointments Queue</h2>
                 <p>Real-time slot logs from Firestore database for Palia Kalan Clinic:</p>
                 <div id="calendarList">
-                    <p class="no-records">Loading appointments...</p>
+                    <p class="no-records">Loading live clinic records...</p>
                 </div>
             </section>
         </div>
@@ -189,6 +187,7 @@
     </main>
 
     <script>
+        // Production Configuration Setup
         const firebaseConfig = {
             apiKey: "AIzaSyAoAdd3afb54fb27cfc18fa",
             authDomain: "palia-kalan-telehealth.firebaseapp.com",
@@ -201,6 +200,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // Safe View Switching Controller
         function switchPage(pageId) {
             if (pageId === 'calendarPage') {
                 const isAlreadyLoggedIn = sessionStorage.getItem('doctorAuthenticated');
@@ -228,77 +228,106 @@
             }
         }
 
+        // Direct interception handling for safe value extraction
         document.getElementById('appointmentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const statusMessage = document.getElementById('statusMessage');
             
-            // Explicitly grabbing values using .value ensures they are never submitted empty
-            const doctorType = document.getElementById('doctorSelect').value;
-            const patientName = document.getElementById('patientName').value;
-            const patientPhone = document.getElementById('patientPhone').value;
-            const appointmentDate = document.getElementById('appointmentDate').value;
-            const appointmentTime = document.getElementById('appointmentTime').value;
-            const symptoms = document.getElementById('symptoms').value;
+            // Extract values directly at submission time and convert to text
+            const docSel = document.getElementById('doctorSelect');
+            const patName = document.getElementById('patientName');
+            const patPhone = document.getElementById('patientPhone');
+            const appDate = document.getElementById('appointmentDate');
+            const appTime = document.getElementById('appointmentTime');
+            const sym = document.getElementById('symptoms');
+
+            const payload = {
+                doctorType: String(docSel.value || "Senior Doctor"),
+                patientName: String(patName.value || "Anonymous Patient"),
+                patientPhone: String(patPhone.value || "No Phone Provided"),
+                appointmentDate: String(appDate.value || "Undated"),
+                appointmentTime: String(appTime.value || "Unscheduled"),
+                symptoms: String(sym.value || "None Logged"),
+                createdAt: new Date().toISOString()
+            };
 
             try {
-                await db.collection("appointments").add({
-                    doctorType: doctorType,
-                    patientName: patientName,
-                    patientPhone: patientPhone,
-                    appointmentDate: appointmentDate,
-                    appointmentTime: appointmentTime,
-                    symptoms: symptoms,
-                    createdAt: new Date().toISOString()
-                });
+                // Upload data to Firestore cloud collection
+                await db.collection("appointments").add(payload);
 
+                // Reset form values cleanly
                 document.getElementById('appointmentForm').reset();
                 statusMessage.style.display = "none";
 
+                // Fast-pass authorization to display the queue smoothly
                 sessionStorage.setItem('doctorAuthenticated', 'true');
                 switchPage('calendarPage');
 
             } catch (error) {
-                console.error("Firebase write error: ", error);
+                console.error("Critical Write Error:", error);
                 statusMessage.style.display = "block";
-                statusMessage.textContent = "❌ Database error. Make sure your rules allow public writes.";
+                statusMessage.textContent = "❌ Failed to save. Ensure Firestore Rules allow writes.";
                 statusMessage.className = "error";
             }
         });
 
+        // Dynamic cloud collection loading script
         function loadCalendarAppointments() {
             const container = document.getElementById('calendarList');
-            container.innerHTML = '<p class="no-records">Syncing files from server...</p>';
+            container.innerHTML = '<p class="no-records">Syncing real-time records from Cloud Firestore...</p>';
             
             db.collection("appointments").get().then((querySnapshot) => {
                 container.innerHTML = "";
-                if(querySnapshot.empty) {
+                if (querySnapshot.empty) {
                     container.innerHTML = '<p class="no-records">No clinic appointments booked yet.</p>';
                     return;
                 }
                 
-                let itemsList = [];
+                let records = [];
                 querySnapshot.forEach((doc) => {
-                    itemsList.push({ id: doc.id, ...doc.data() });
+                    const res = doc.data();
+                    
+                    // Parse values securely so that accidental object formats don't crash the script
+                    let displayedDate = "No Date Set";
+                    if (res.appointmentDate) {
+                        if (typeof res.appointmentDate === 'object' && res.appointmentDate.seconds) {
+                            displayedDate = new Date(res.appointmentDate.seconds * 1000).toLocaleDateString();
+                        } else {
+                            displayedDate = String(res.appointmentDate);
+                        }
+                    }
+
+                    records.push({
+                        id: doc.id,
+                        doctorType: String(res.doctorType || "Senior Doctor"),
+                        patientName: String(res.patientName || "Anonymous Patient"),
+                        patientPhone: String(res.patientPhone || "No Contact Phone"),
+                        appointmentDate: displayedDate,
+                        appointmentTime: String(res.appointmentTime || "Not Selected"),
+                        symptoms: String(res.symptoms || "None Logged")
+                    });
                 });
 
-                itemsList.sort((a, b) => String(a.appointmentDate).localeCompare(String(b.appointmentDate)));
+                // Clear chronological timeline sorting
+                records.sort((a, b) => a.appointmentDate.localeCompare(b.appointmentDate));
 
-                itemsList.forEach((data) => {
+                // Paint appointments dynamically onto the screen container
+                records.forEach((data) => {
                     const item = document.createElement('div');
                     item.className = 'appointment-item';
                     item.innerHTML = `
-                        <div class="appointment-date">🗓️ Date: ${data.appointmentDate || 'No Date'} | ⏰ Time: ${data.appointmentTime || 'No Time Slot Selected'}</div>
-                        <strong>Department/Doctor:</strong> ${data.doctorType || 'Senior Doctor'}<br>
-                        <strong>Patient Name:</strong> ${data.patientName || 'Not Provided'}<br>
-                        <strong>Contact Phone:</strong> ${data.patientPhone || 'Not Provided'}<br>
-                        <strong>Symptoms Logged:</strong> ${data.symptoms || 'None Specified'}<br>
+                        <div class="appointment-date">🗓️ Date: ${data.appointmentDate} | ⏰ Time Slot: ${data.appointmentTime}</div>
+                        <strong>Department/Doctor:</strong> ${data.doctorType}<br>
+                        <strong>Patient Name:</strong> ${data.patientName}<br>
+                        <strong>Contact Phone:</strong> ${data.patientPhone}<br>
+                        <strong>Symptoms Logged:</strong> ${data.symptoms}<br>
                         <small style="color:#aaa;">Saved Reference ID: ${data.id}</small>
                     `;
                     container.appendChild(item);
                 });
             }).catch((error) => {
-                console.error("Firebase read error: ", error);
-                container.innerHTML = `<p class="no-records" style="color:red;">Error pulling records: ${error.message}.</p>`;
+                console.error("Critical Read Error:", error);
+                container.innerHTML = `<p class="no-records" style="color:red;">Error syncing from Cloud database: ${error.message}</p>`;
             });
         }
     </script>
